@@ -67,7 +67,7 @@ void* thr_func(void* arg)
 	}
 	/* We add one to the output to easily compare
 	 * output of our program with `seq 1 N` */
-	printf("%d\n", data->tid + 1);
+	printf("%d %d\n", data->tid + 1, pthread_self());
 	/* fflush() guarantees that thread
 	 * won't exit until buffers are flushed,
 	 * though usually putting \n causes printf()
