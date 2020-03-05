@@ -24,8 +24,21 @@ static inline void __list_add(struct list_head *new,
                               struct list_head *prev,
                               struct list_head *next)
 {
-	new->next = next;
-	prev->next = new;
+	do {
+		// Before element is added to the list
+		// its fields are our local so we feel
+		// free not to use atomics here
+		new->next = next;
+		// This is the only place where we need CAS.
+		// Since elements are not deleted from
+		// list we can guarantee that element
+		// isn't e.g. free()-d or put to another
+		// place in the list while we try to
+		// access its ->next field. In case of
+		// failure we just change our ->next
+		// field.
+		__atomic_compare_exchange_n(&prev->next, &next, new, 1, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+	} while (new->next != next);
 }
 
 /**
