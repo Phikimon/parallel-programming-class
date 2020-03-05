@@ -1,4 +1,4 @@
-test: test.c
+test: test.c list.h
 	gcc -Wall -pthread -std=c99 test.c -o test
 
 clean:
