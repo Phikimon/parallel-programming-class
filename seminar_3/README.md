@@ -1,0 +1,43 @@
+## Spinlocks
+
+### Task
+
+Implement spinlock/ticketlock with possible use of yield/sleep along with benchmarks for your algorithm.
+
+### How to use my benchmarks
+
+#### API
+
+To bring your code in compliance with my benchmarking 'framework',
+you should create pull request that:
+1. Creates subdirectory under 'implementations/' directory and puts
+   lock.{c,cpp,asm} file there. This file shall contain implementations
+   of functions that I will be able to call using prototypes stored in
+   `benchmark/lock.h`.
+2. Adds line to list\_of\_implementations.txt
+3. Adds name of your implementation to `IMPLS` variable in Makefile.
+
+#### C language
+
+`lock.c` file put in newly created directory under `implementations/`
+directory will be automatically compiled to `implementations/%/lock.o`.
+
+#### C++
+
+Most probably some of you would want to use *C++*, in this case
+for the code to be linked successfully declarations of your
+functions shall look like this:
+
+```c++
+extern "C"
+{
+	void* lock_alloc(void);
+	int lock_acquire(void* arg);
+	int lock_release(void* arg);
+	int lock_free(void* arg);
+}
+```
+
+#### Assembly
+
+*TODO*
