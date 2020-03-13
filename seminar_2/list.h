@@ -2,7 +2,7 @@
 #define __LIST_H
 
 struct list_head {
-	struct list_head *next;
+	volatile struct list_head *next;
 };
 
 #define LIST_HEAD_INIT(name) { &(name) }
