@@ -1,10 +1,16 @@
+#ifdef __linux__
 // for usleep()
-#define _DEFAULT_SOURCE
-#define _BSD_SOURCE
+#  define _DEFAULT_SOURCE
+#  define _BSD_SOURCE
 // for clock_gettime()
-#define _POSIX_C_SOURCE 199309L
+#  define _POSIX_C_SOURCE 199309L
+#elif __APPLE__
+#  define _XOPEN_SOURCE
+#endif
 
+#ifdef __linux__
 #include <sys/sysinfo.h>
+#endif
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,7 +88,7 @@ int main(int argc, char* argv[])
 	// Allocate resources for global_lock
 	global_lock = lock_alloc();
 	if (global_lock == (void*)(-1)) {
-		fprintf(stderr, "[MAIN] Error in lock_alloc()\n", r);
+		fprintf(stderr, "[MAIN] Error in lock_alloc(): %d\n", r);
 		return 1;
 	}
 
@@ -109,12 +115,20 @@ int main(int argc, char* argv[])
 	// Ensure that all threads make it to the barrier.
 	usleep(100);
 	// Release bullhead! (Vipuskayte bichka! (C))
+#ifdef __linux__
 	clock_gettime(CLOCK_MONOTONIC_RAW, &overall_start);
+#elif defined(__APPLE__)
+	clock_gettime(_CLOCK_MONOTONIC, &overall_start);
+#endif
 	atomic_fetch_and_dec(&global_barrier);
 
 	// Wait for all threads to finish their job
 	while (atomic_load(&global_atomic_cnt) != thread_num);
+#ifdef __linux__
 	clock_gettime(CLOCK_MONOTONIC_RAW, &overall_end);
+#elif defined(__APPLE__)
+	clock_gettime(_CLOCK_MONOTONIC, &overall_end);
+#endif
 
 	// Wait until all threads exit
 	for (long i = 0; i < thread_num; i++) {
@@ -188,7 +202,7 @@ void* thread_work(void* arg)
 
 		r = lock_acquire(global_lock);
 		if (r != 0) {
-			fprintf(stderr, "[%ld] Error in lock_acquire(): %d\n", r);
+			fprintf(stderr, "[%ld] Error in lock_acquire(): %d\n", targ->id, r);
 			exit(1);
 		}
 
@@ -198,7 +212,7 @@ void* thread_work(void* arg)
 
 		r = lock_release(global_lock);
 		if (r != 0) {
-			fprintf(stderr, "[%ld] Error in lock_release(): %d\n", r);
+			fprintf(stderr, "[%ld] Error in lock_release(): %d\n", targ->id, r);
 			exit(1);
 		}
 

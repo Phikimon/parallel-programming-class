@@ -1,7 +1,15 @@
 void* lock_alloc(void) {
-	return (void*)0;
+	return (void*)(-1);
 }
 
-int lock_acquire(void* arg) {}
-int lock_release(void* arg) {}
-int lock_free(void* arg) {}
+int lock_acquire(void* arg) {
+	return 1;
+}
+
+int lock_release(void* arg) {
+	return 1;
+}
+
+int lock_free(void* arg) {
+	return 1;
+}
