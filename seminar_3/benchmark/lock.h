@@ -7,6 +7,13 @@
 struct lock;
 typedef struct lock lock_t;
 
+// Disables mangling if we are in C++ so that
+// functions can be called from C
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
 /*
  * Allocates resources for the lock.
  *
@@ -54,5 +61,9 @@ int lock_release(lock_t* arg);
  * otherwise, e.g. if lock was not released beforehand.
  */
 int lock_free(lock_t* arg);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif
