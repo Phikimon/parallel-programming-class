@@ -1,6 +1,12 @@
 #ifndef LOCK_H
 #define LOCK_H
 
+// Some syntactic sugar to be used instead of void* according to
+// https://www.kernel.org/doc/html/v4.10/process/coding-style.html#typedefs
+// lock_t cannot be dereferenced and is semantically similar to void.
+struct lock;
+typedef struct lock lock_t;
+
 /*
  * Allocates resources for the lock.
  *
@@ -14,7 +20,7 @@
  * Returns pointer to the lock in case
  * of success and (void*)(-1) otherwise.
  */
-void* lock_alloc(long unsigned n_threads);
+lock_t* lock_alloc(long unsigned n_threads);
 
 /*
  * Acquires the lock.
@@ -24,7 +30,7 @@ void* lock_alloc(long unsigned n_threads);
  * Returns zero in case of success and nonzero value
  * otherwise, e.g. if lock is in inconsistent state.
  */
-int lock_acquire(void* arg);
+int lock_acquire(lock_t* arg);
 
 /*
  * Releases the lock.
@@ -34,7 +40,7 @@ int lock_acquire(void* arg);
  * Returns zero in case of success and nonzero value
  * otherwise, e.g. if lock was not acquired by the caller.
  */
-int lock_release(void* arg);
+int lock_release(lock_t* arg);
 
 /*
  * Frees resources associated with the lock.
@@ -47,6 +53,6 @@ int lock_release(void* arg);
  * Returns zero in case of success and nonzero value
  * otherwise, e.g. if lock was not released beforehand.
  */
-int lock_free(void* arg);
+int lock_free(lock_t* arg);
 
 #endif

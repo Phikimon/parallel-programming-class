@@ -31,7 +31,7 @@ functions shall look like this:
 ```c++
 extern "C"
 {
-	void* lock_alloc(void);
+	void* lock_alloc(long unsigned n_threads);
 	int lock_acquire(void* arg);
 	int lock_release(void* arg);
 	int lock_free(void* arg);

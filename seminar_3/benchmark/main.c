@@ -23,7 +23,7 @@
 #include "lock.h"
 
 // Global lock is the spin/ticket-lock being benchmarked
-void* global_lock;
+lock_t* global_lock;
 // Global counter is incremented by each thread that
 // is in the critical section protected by global_lock.
 // main() verifies that at the end of the program global_cnt
