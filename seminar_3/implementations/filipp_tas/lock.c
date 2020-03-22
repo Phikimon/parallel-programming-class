@@ -11,7 +11,7 @@ typedef struct {
 #define atomic_fetch_and_dec(ptr) ((int32_t)(__atomic_fetch_sub(ptr, 1, __ATOMIC_SEQ_CST)))
 #define atomic_cas(ptr, old, new) __atomic_compare_exchange_n(ptr, old, new, 1, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 
-void* lock_alloc(void) {
+void* lock_alloc(long unsigned n_threads) {
 	static volatile LOCK ilock;
 	atomic_store(&ilock.val, 0);
 

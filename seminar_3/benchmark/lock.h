@@ -4,13 +4,17 @@
 /*
  * Allocates resources for the lock.
  *
+ * n_threads is number of threads that will
+ * share this lock. lock_alloc() may ignore
+ * this argument.
+ *
  * It is guaranteed to be called only once from a
  * calling program, so allocation in static memory is OK.
  *
  * Returns pointer to the lock in case
  * of success and (void*)(-1) otherwise.
  */
-void* lock_alloc(void);
+void* lock_alloc(long unsigned n_threads);
 
 /*
  * Acquires the lock.

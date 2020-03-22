@@ -1,4 +1,4 @@
-void* lock_alloc(void) {
+void* lock_alloc(long unsigned n_threads) {
 	return (void*)(-1);
 }
 
