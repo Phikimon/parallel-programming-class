@@ -44,6 +44,7 @@ do
 done
 
 echo "Plotting metrics for $1"
+mkdir res/ 2> /dev/null
 gnuplot <<< "set term png size 1920,1080; \
              set output 'res/$1.png'; \
              set multiplot layout 2, 1 title '${1/#_/ }' font \",14\"; \
