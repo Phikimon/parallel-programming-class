@@ -1,5 +1,7 @@
+#include <stddef.h> // for NULL
+
 void* lock_alloc(long unsigned n_threads) {
-	return (void*)(-1);
+	return NULL;
 }
 
 int lock_acquire(void* arg) {

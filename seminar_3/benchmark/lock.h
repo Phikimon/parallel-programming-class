@@ -18,7 +18,7 @@ typedef struct lock lock_t;
  * calling program, so allocation in static memory is OK.
  *
  * Returns pointer to the lock in case
- * of success and (void*)(-1) otherwise.
+ * of success and (void*)(NULL) otherwise.
  */
 lock_t* lock_alloc(long unsigned n_threads);
 
