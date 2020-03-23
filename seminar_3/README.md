@@ -13,8 +13,9 @@ you should create pull request that:
 1. Creates subdirectory under 'implementations/' directory and puts
    lock.{c,cpp,asm} file there. This file shall contain implementations
    of functions that I will be able to call using prototypes stored in
-   `benchmark/lock.h`.
-2. Adds line to list\_of\_implementations.txt
+   `benchmark/lock.h`. Also it should contain definition of struct lock
+   also mentioned in `benchmark/lock.h`.
+2. Adds line to list\_of\_implementations.txt (optional)
 3. Adds name of your implementation to `IMPLS` variable in Makefile.
 
 #### C language
@@ -37,6 +38,9 @@ extern "C"
 	int lock_free(void* arg);
 }
 ```
+
+Alternatively you may just include "lock.h" file and declare your
+functions in conformance with it.
 
 #### Assembly
 

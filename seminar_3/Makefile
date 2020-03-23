@@ -15,7 +15,7 @@ build/main.o: $(BNCHDIR)/main.c
 	gcc -c -pthread -std=c99 $^ -o $@
 
 %lock.o: %lock.c
-	gcc -c -static -shared -std=c99 $^ -o $@
+	gcc -Wall -pedantic -c -static -Ibenchmark/ -shared -std=c99 $^ -o $@
 
 build:
 	mkdir build/

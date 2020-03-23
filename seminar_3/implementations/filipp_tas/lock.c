@@ -2,24 +2,26 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-typedef struct {
+#include "lock.h"
+
+struct lock {
 	volatile int32_t val;
-} LOCK;
+};
 
 #define atomic_store(ptr, val)    __atomic_store_n(ptr, val, __ATOMIC_SEQ_CST)
 #define atomic_load(ptr)          __atomic_load_n(ptr, __ATOMIC_SEQ_CST)
 #define atomic_fetch_and_dec(ptr) ((int32_t)(__atomic_fetch_sub(ptr, 1, __ATOMIC_SEQ_CST)))
 #define atomic_cas(ptr, old, new) __atomic_compare_exchange_n(ptr, old, new, 1, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 
-void* lock_alloc(long unsigned n_threads) {
-	static volatile LOCK ilock;
+lock_t* lock_alloc(long unsigned n_threads) {
+	static volatile lock_t ilock;
 	atomic_store(&ilock.val, 0);
 
-	return (void*)&ilock;
+	return (lock_t*)&ilock;
 }
 
-int lock_acquire(void* arg) {
-	LOCK* lock_ptr = (LOCK*)arg;
+int lock_acquire(lock_t* arg) {
+	lock_t* lock_ptr = (lock_t*)arg;
 
 	int32_t old;
 	for (;;) {
@@ -35,8 +37,8 @@ int lock_acquire(void* arg) {
 	return 0;
 }
 
-int lock_release(void* arg) {
-	LOCK* lock_ptr = (LOCK*)arg;
+int lock_release(lock_t* arg) {
+	lock_t* lock_ptr = (lock_t*)arg;
 	if (atomic_fetch_and_dec(&lock_ptr->val) != 1) {
 		fprintf(stderr, "Lock was not acquired before releasing\n");
 		return 1;
@@ -44,8 +46,8 @@ int lock_release(void* arg) {
 	return 0;
 }
 
-int lock_free(void* arg) {
-	LOCK* lock_ptr = (LOCK*)arg;
+int lock_free(lock_t* arg) {
+	lock_t* lock_ptr = (lock_t*)arg;
 	if (atomic_load(&lock_ptr->val) != 0) {
 		fprintf(stderr, "Lock was not released before freeing\n");
 		return 1;
