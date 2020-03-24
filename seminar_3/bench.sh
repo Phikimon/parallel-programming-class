@@ -50,10 +50,8 @@ gnuplot <<< "set term png size 1920,1080; \
              set multiplot layout 2, 1 title '${1/#_/ }' font \",14\"; \
              set tmargin 2; \
              set notitle; \
-             plot 'build/plot.dat' u 1:2 title 'overall time(ms)' w points, \
-                  'build/plot.dat' u 1:2 smooth acs notitle w lines; \
-             plot 'build/plot.dat' u 1:3 title 'average latency(cpu ticks) per iteration' w points, \
-                  'build/plot.dat' u 1:3 smooth acs notitle w lines"
+             plot 'build/plot.dat' u 1:2 title 'overall time(ms)' w linespoints; \
+             plot 'build/plot.dat' u 1:3 title 'average latency(cpu ticks) per iteration' w linespoints"
 echo "Plot image stored at res/$1.png"
 if [ $GNUPLOTTERM = "png" ]
 then
