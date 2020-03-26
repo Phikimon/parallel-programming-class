@@ -87,8 +87,8 @@ int main(int argc, char* argv[])
 
 	// Allocate resources for global_lock
 	global_lock = lock_alloc(thread_num);
-	if (global_lock == (void*)(-1)) {
-		fprintf(stderr, "[MAIN] Error in lock_alloc(%ld): %d\n", thread_num, r);
+	if (global_lock == NULL) {
+		fprintf(stderr, "[MAIN] Error in lock_alloc(%ld)\n", thread_num);
 		return 1;
 	}
 
