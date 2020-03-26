@@ -34,9 +34,12 @@ for thread_num in 1 4 `seq 64 64 512` `seq 1024 512 4096` `seq 6144 2048 4096` #
 do
 	iter_per_thread=$(($work_amount / $thread_num))
 	echo "Running ./build/$1 $thread_num $iter_per_thread"
-	( time ( ./build/$1 $thread_num $iter_per_thread >> build/plot.dat ) 2>&1 ) | grep real
+	TIME_SEC=`date "+%s"`
+	./build/$1 $thread_num $iter_per_thread >> build/plot.dat
+	EXCODE="$?"
+	echo "executed for  $((`date "+%s"`-$TIME_SEC)) sec"
 	sleep 1 # Let previous process free all resources
-	if [ $? != 0 ]
+	if [[ $EXCODE != 0 ]]
 	then
 		echo "./build/$1 failed with error $?, aborting"
 		exit
