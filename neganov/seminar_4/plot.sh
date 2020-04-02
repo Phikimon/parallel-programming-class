@@ -1,4 +1,7 @@
 #!/bin/bash
+
+PERF_CACHE_MISS_EVENT_NAME=-L1-dcache-load-misses
+
 N=128
 
 make
@@ -11,7 +14,7 @@ do
 	else
 		echo -n "$B `bc <<< "$N*$N*$N/8"` " >> plot.dat
 	fi
-	perf stat -e L1-dcache-load-misses ./main <<< "$N $B" 2>&1 \
+	perf stat -e $PERF_CACHE_MISS_EVENT_NAME ./main <<< "$N $B" 2>&1 \
 		| grep L1 \
 		| awk '{print $1}'  \
 		| awk 'BEGIN { FS = "." }; {print $1}' \
