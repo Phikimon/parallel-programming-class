@@ -7,7 +7,8 @@ IMPLS=tas              \
       queue_no_deref   \
       queue_pause_atom \
       queue_pause      \
-      queue_wait
+      queue_wait       \
+      queue_test
 
 IMPLTARGETS=$(addprefix build/, $(IMPLS))
 
