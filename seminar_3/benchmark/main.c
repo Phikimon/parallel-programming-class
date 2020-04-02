@@ -209,8 +209,6 @@ void* thread_work(void* arg)
 		}
 
 		global_cnt++;
-		volatile int j = 0;
-		while (j++ < 4096);
 
 		r = lock_release(global_lock);
 		if (r != 0) {
