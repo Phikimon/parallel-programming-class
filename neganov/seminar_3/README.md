@@ -6,9 +6,32 @@ Implement spinlock/ticketlock with possible use of yield/sleep along with benchm
 
 ### Result
 
+Tests were performed on [Mid 2015 2,2 GHz Intel Core i7 MacBook Pro](https://support.apple.com/kb/SP719) with 4 physical cores and 8 threads.
+
+It is obvious that queuing implementations' performance suffers, once number of threads reaches number of cpu threads, this is because they start to be inevitably scheduled off the cpu, thus slowing down whole queue. This leads to the conclusion that queuing algorithms should be used for threads that are not very likely or even cannot be scheduled at all.
+
+#### How to read plots
+* Plots of one style represent consequent executions of the same algorithm. These are used to see approximate margin of error.
+* X axis is number of threads launched and Y axis is number of seconds exceeded.
+* Bottom plot contains only queue locks properly scaled.
+
 ![implementation performance](https://github.com/phikimon/parallel-programming-class/raw/master/neganov/seminar_3/results/performance.png "Implementations performance")
 ![queue implementation performance](https://github.com/phikimon/parallel-programming-class/raw/master/neganov/seminar_3/results/queue_performance.png "Queue locks implementations performance")
 
+#### Notes on legend
+* tas - [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)
+* ttas - [test and test-and-set](https://en.wikipedia.org/wiki/Test_and_test-and-set)
+* ttas pause - "test and test-and-set" with pause in "test" loop
+* ttas wait - "test and test-and-set" with randomized usleep in "test" loop
+* ticket - [ticket lock](https://en.wikipedia.org/wiki/Ticket_lock)
+* queue shared - [Array Based Queuing Lock](https://en.wikipedia.org/wiki/Array_Based_Queuing_Locks) with 64 threads' sharing each cache line
+* queue excl - ABQL with single thread owning each cache line
+* queue excl no deref - ABQL with single thread owning each cache line, some pointer dereferences are optimized out
+* queue pause - ABQL with pause in spinning loop
+* queue pause atom - replaces memory barriers protecting `ticket_serving`, uses `ticket_serving` as atomic
+
+#### TODO
+* implement exponential backoff for ABQL and ttas
 
 ## How to use my benchmarks
 
