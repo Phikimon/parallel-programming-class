@@ -46,6 +46,8 @@ lock_t* lock_alloc(long unsigned n_threads) {
 	}
 	int size = sizeof(struct lock) + n_threads * sizeof(serving_t);
 	struct lock* qlock = calloc(1, size);
+	if (!qlock)
+		return NULL;
 	qlock->serving[0].val = 1;
 	qlock->n_threads = n_threads;
 	srand(time(NULL));

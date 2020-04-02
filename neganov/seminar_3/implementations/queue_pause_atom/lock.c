@@ -39,6 +39,8 @@ lock_t* lock_alloc(long unsigned n_threads) {
 	}
 	int size = sizeof(struct lock) + n_threads * sizeof(serving_t);
 	struct lock* qlock = calloc(1, size);
+	if (!qlock)
+		return NULL;
 	qlock->serving[0].val = 1;
 	qlock->n_threads = n_threads;
 
@@ -72,8 +74,7 @@ int lock_free(lock_t* arg) {
 	lock_t* qlock = (lock_t*)arg;
 
 	ticket_t next_ticket = atomic_load(&qlock->next_ticket);
-	__sync_synchronize();
-	ticket_t ticket_serving = qlock->ticket_serving;
+	ticket_t ticket_serving = atomic_load(&qlock->ticket_serving);
 	if (next_ticket != ticket_serving) {
 		fprintf(stderr, "\nlock_free(): next_ticket = %u != %u = ticket_serving\n",
 				next_ticket, ticket_serving);
