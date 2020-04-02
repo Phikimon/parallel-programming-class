@@ -4,7 +4,13 @@
 
 Implement spinlock/ticketlock with possible use of yield/sleep along with benchmarks for your algorithm.
 
-### How to use my benchmarks
+### Result
+
+![implementation performance](https://github.com/phikimon/parallel-programming-class/raw/master/neganov/seminar_3/results/performance.png "Implementations performance")
+![queue implementation performance](https://github.com/phikimon/parallel-programming-class/raw/master/neganov/seminar_3/results/queue_performance.png "Queue locks implementations performance")
+
+
+## How to use my benchmarks
 
 #### API
 

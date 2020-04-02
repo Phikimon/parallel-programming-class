@@ -1,0 +1,8 @@
+# thread_num overall_exec_time_in_ms average_wait_metric_per_iteration
+1	12772	0
+4	13396	0
+6	12696	0
+8	9587	0
+16	7929	0
+32	5908	0
+64	5667	0
