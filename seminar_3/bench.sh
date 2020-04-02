@@ -2,23 +2,11 @@
 TARGET="$1"
 if [ -z $TARGET ]
 then
-	echo "Usage: ./bench.sh <implementation_name> [dumb/png]"
+	echo "Usage: ./bench.sh <implementation_name>"
 	echo "Example: ./bench.sh filipp_tas"
 	exit
 fi
-echo "Benchmarking $1"
-
-GNUPLOTTERM="$2"
-if [ -z $GNUPLOTTERM ]
-then
-	echo "No gnuplot terminal specified, defaulting to 'dumb'"
-	GNUPLOTTERM=dumb
-else
-	if [ $GNUPLOTTERM != "dumb" ] && [ $GNUPLOTTERM != "png" ]
-	then
-		echo "Unknown gnuplot terminal specified, defaulting to 'dumb'"
-	fi
-fi
+echo "=====> $1"
 
 echo "Making $1"
 make build/$1 > /dev/null
@@ -29,15 +17,15 @@ then
 fi
 
 echo "# thread_num overall_exec_time_in_ms average_wait_metric_per_iteration" > build/plot.dat
-work_amount=65536
-for thread_num in 1 4 `seq 64 64 512` `seq 1024 512 4096` `seq 6144 2048 4096` #8192`
+work_amount=134217728
+for thread_num in 1 4 6 7 8
 do
 	iter_per_thread=$(($work_amount / $thread_num))
 	echo "Running ./build/$1 $thread_num $iter_per_thread"
 	TIME_SEC=`date "+%s"`
 	./build/$1 $thread_num $iter_per_thread >> build/plot.dat
 	EXCODE="$?"
-	echo "executed for  $((`date "+%s"`-$TIME_SEC)) sec"
+	printf "\t$((`date "+%s"`-$TIME_SEC)) sec\n"
 	sleep 1 # Let previous process free all resources
 	if [[ $EXCODE != 0 ]]
 	then
@@ -55,12 +43,11 @@ gnuplot <<< "set term png size 1920,1080; \
              set notitle; \
              plot 'build/plot.dat' u 1:2 title 'overall time(ms)' w linespoints; \
              plot 'build/plot.dat' u 1:3 title 'average latency(cpu ticks) per iteration' w linespoints"
-echo "Plot image stored at res/$1.png"
-if [ $GNUPLOTTERM = "png" ]
-then
-	echo "Opening image with plot"
-	eog "res/$1.png"
-fi
 
 gnuplot <<< "set term dumb size `tput cols`,`tput lines`; \
              plot 'build/plot.dat' u 1:2 title 'overall time(ms)' w linespoints"
+
+FILENAME="plot_data/$1_`date "+%s"`.dat"
+echo "Saving plot data in $FILENAME"
+mkdir plot_data/ 2>/dev/null
+cp build/plot.dat $FILENAME
