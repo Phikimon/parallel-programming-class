@@ -67,6 +67,8 @@ struct thread_arg {
 	long wait_metric;
 };
 
+#define NO_LATENCY_METRIC
+
 int main(int argc, char* argv[])
 {
 	int r;
@@ -156,8 +158,10 @@ int main(int argc, char* argv[])
 	long overall_us = DELTA_TIMESPEC_US(overall_end, overall_start);
 	// Compute average execution time of a thread
 	long sum = 0;
+#ifndef NO_LATENCY_METRIC
 	for (long i = 0; i < thread_num; i++)
 		sum += thr_args[i].wait_metric;
+#endif
 	// Print performance metrics in the following format:
 	// thread_num <overall_exec_time_in_ms> <average_wait_metric_per_iteration>
 	printf("%ld\t%ld\t%ld\n", thread_num, overall_us/1000, sum/(thread_num*iter_num));
@@ -178,8 +182,6 @@ uint64_t rdtscl(void)
 	return ( (uint64_t)lo)|( ((uint64_t)hi)<<32 );
 }
 
-#define WAIT_METRIC_TSC
-
 void* thread_work(void* arg)
 {
 	int r;
@@ -188,15 +190,15 @@ void* thread_work(void* arg)
 	while (atomic_load(&global_barrier) == 1);
 
 	for (long i = 0; i < targ->iters; i++) {
-#ifdef WAIT_METRIC_US
+#ifdef LATENCY_METRIC_US
 		struct timespec start, end;
-#elif defined(WAIT_METRIC_TSC)
+#elif defined(LATENCY_METRIC_TSC)
 		uint64_t start, end;
 #endif
 
-#ifdef WAIT_METRIC_US
+#ifdef LATENCY_METRIC_US
 		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-#elif defined(WAIT_METRIC_TSC)
+#elif defined(LATENCY_METRIC_TSC)
 		start = rdtscl();
 #endif
 
@@ -216,15 +218,15 @@ void* thread_work(void* arg)
 			exit(1);
 		}
 
-#ifdef WAIT_METRIC_US
+#ifdef LATENCY_METRIC_US
 		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-#elif defined(WAIT_METRIC_TSC)
+#elif defined(LATENCY_METRIC_TSC)
 		end = rdtscl();
 #endif
 
-#ifdef WAIT_METRIC_US
+#ifdef LATENCY_METRIC_US
 		targ->wait_metric += DELTA_TIMESPEC_US(end, start);
-#elif defined(WAIT_METRIC_TSC)
+#elif defined(LATENCY_METRIC_TSC)
 		targ->wait_metric += end - start;
 #endif
 	}
