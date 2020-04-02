@@ -1,13 +1,13 @@
-IMPLS=filipp_tas              \
-      filipp_ttas             \
-      filipp_ttas_pause       \
-      filipp_ttas_wait        \
-      filipp_queue_shared     \
-      filipp_queue_excl       \
-      filipp_queue_no_deref   \
-      filipp_queue_pause_atom \
-      filipp_queue_pause      \
-      filipp_queue_wait
+IMPLS=tas              \
+      ttas             \
+      ttas_pause       \
+      ttas_wait        \
+      queue_shared     \
+      queue_excl       \
+      queue_no_deref   \
+      queue_pause_atom \
+      queue_pause      \
+      queue_wait
 
 IMPLTARGETS=$(addprefix build/, $(IMPLS))
 
