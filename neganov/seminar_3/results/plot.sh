@@ -16,6 +16,7 @@ gnuplot <<< "set term png size 1920,1080; \
              set style line 8 linewidth 2 pointsize 2; \
              set style line 9 linewidth 2 pointsize 2; \
              set style line 10 linewidth 2 pointsize 2; \
+             set style line 11 linewidth 2 pointsize 2; \
              plot 'tas_1.dat'              u 1:(column(2)/1000) title 'tas 1'                      w linespoints ls 1, \
                   'tas_2.dat'              u 1:(column(2)/1000) title 'tas 2'                      w linespoints ls 1, \
                   'tas_3.dat'              u 1:(column(2)/1000) title 'tas 3'                      w linespoints ls 1, \
@@ -25,6 +26,8 @@ gnuplot <<< "set term png size 1920,1080; \
                   'ttas_pause_2.dat'       u 1:(column(2)/1000) title 'ttas pause 2'               w linespoints ls 3, \
                   'ttas_wait_1.dat'        u 1:(column(2)/1000) title 'ttas wait 1'                w linespoints ls 4, \
                   'ttas_wait_2.dat'        u 1:(column(2)/1000) title 'ttas wait 2'                w linespoints ls 4, \
+                  'ticket_1.dat'           u 1:(column(2)/1000) title 'ticket 1'                   w linespoints ls 11, \
+                  'ticket_2.dat'           u 1:(column(2)/1000) title 'ticket 2'                   w linespoints ls 11, \
                   'queue_shared_1.dat'     u 1:(column(2)/1000) title 'queue shared 1'             w linespoints ls 10, \
                   'queue_shared_2.dat'     u 1:(column(2)/1000) title 'queue shared 2'             w linespoints ls 10, \
                   'queue_excl_1.dat'       u 1:(column(2)/1000) title 'queue excl 1'               w linespoints ls 6, \

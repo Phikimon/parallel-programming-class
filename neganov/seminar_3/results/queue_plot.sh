@@ -16,7 +16,10 @@ gnuplot <<< "set term png size 1920,1080; \
              set style line 8 linewidth 2 pointsize 2; \
              set style line 9 linewidth 2 pointsize 2; \
              set style line 10 linewidth 2 pointsize 2; \
-             plot 'queue_shared_1.dat'     u 1:(column(2)/1000) title 'queue shared 1'             w linespoints ls 10, \
+             set style line 11 linewidth 2 pointsize 2; \
+             plot 'ticket_1.dat'           u 1:(column(2)/1000) title 'ticket 1'                   w linespoints ls 11, \
+                  'ticket_2.dat'           u 1:(column(2)/1000) title 'ticket 2'                   w linespoints ls 11, \
+                  'queue_shared_1.dat'     u 1:(column(2)/1000) title 'queue shared 1'             w linespoints ls 10, \
                   'queue_shared_2.dat'     u 1:(column(2)/1000) title 'queue shared 2'             w linespoints ls 10, \
                   'queue_excl_1.dat'       u 1:(column(2)/1000) title 'queue excl 1'               w linespoints ls 6, \
                   'queue_excl_2.dat'       u 1:(column(2)/1000) title 'queue excl 2'               w linespoints ls 6, \

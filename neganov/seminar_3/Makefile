@@ -2,6 +2,7 @@ IMPLS=tas              \
       ttas             \
       ttas_pause       \
       ttas_wait        \
+      ticket           \
       queue_shared     \
       queue_excl       \
       queue_no_deref   \
