@@ -18,6 +18,13 @@ do
 		| sed 's/,//g' >> plot.dat
 done
 
-gnuplot <<< "set term dumb 140 50;\
+WIDTH=`tput cols`
+HEIGHT=`tput rows`
+if [[ $? != 0 ]]
+then
+	WIDTH=80
+	HEIGHT=25
+fi
+gnuplot <<< "set term dumb $WIDTH $HEIGHT;\
              plot 'plot.dat' u 1:3 title 'real'      w l,\
                   'plot.dat' u 1:2 title 'predicted' w l"
