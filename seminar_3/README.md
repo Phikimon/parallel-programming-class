@@ -15,8 +15,7 @@ you should create pull request that:
    of functions that I will be able to call using prototypes stored in
    `benchmark/lock.h`. Also it should contain definition of struct lock
    also mentioned in `benchmark/lock.h`.
-2. Adds line to list\_of\_implementations.txt (optional)
-3. Adds name of your implementation to `IMPLS` variable in Makefile.
+2. Adds name of your implementation to `IMPLS` variable in Makefile.
 
 #### C language
 
