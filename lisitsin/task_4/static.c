@@ -6,9 +6,11 @@
 #include <math.h>
 #include <string.h>
 
-#define WORK_QUANT 9
-
 int MPI_SIZE = 0;
+
+typedef struct {
+	int begin, end;
+} range_s;
 
 void graceful_abort(int signum)
 {
@@ -16,91 +18,121 @@ void graceful_abort(int signum)
 	MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-typedef struct {
-	int begin, end;
-} range_s;
+void add_one(int* arr, int size)
+{
+	int carry = 1;
+	for (int i = size - 1; i >= 0; i--) {
+		arr[i] += carry;
+		carry = arr[i] > 999999999;
+		arr[i] %= 1000000000;
+	}
+}
 
 // It is responsibility of the caller to free result
-char* sum_block(char* string1, char* string2, range_s rg, int rank) {
-	int a, b;
-
-	char tmp = string1[9];
-	string1[9] = '\0';
-	a = atoi(string1);
-	string1[9] = tmp;
-
-	tmp = string2[9];
-	string2[9] = '\0';
-	b = atoi(string2);
-	string2[9] = tmp;
-
+int* sum_block(int* term1, int* term2, int size, int rank) {
 	assert((rank <= MPI_SIZE - 1) && (rank >= 1));
-	int will_speculate = (rank != MPI_SIZE - 1);
+	assert(size > 0);
 
-	int carry1_in = 0, carry2_in = 1;
-	int carry1_out, carry2_out;
+	// We only speculate if we can not constrain
+	// effect of carry from less significant digits
+	int will_speculate = (rank != MPI_SIZE - 1) &&
+	                     (term1[size-1] + term2[size-1] == 999999999);
+#ifdef DEBUG_PRINT
+	if (will_speculate)
+		fprintf(stderr, "%d: will speculate\n", rank);
+#endif
 
-	int digits_num = rg.end - rg.begin;
-	char* result1 = (char*)malloc(digits_num + sizeof((char)'\0'));
+	int* result1 = (int*)malloc(size * sizeof(int));
 	assert(result1);
-	result1[digits_num] = '\0';
 
-	char* result2;
+	int* result2;
 	if (will_speculate) {
-		result2 = (char*)malloc(digits_num + sizeof((char)'\0'));
+		result2 = (int*)malloc(size * sizeof(int));
 		assert(result2);
-		result2[digits_num] = '\0';
 	}
 
-	for (int i = 0; i < digits_num; i += WORK_QUANT) {
-		int tmp1, tmp2;
+	int carry1 = 0, carry2 = 1;
 
-		int end_of_block = i + WORK_QUANT;
-		if (i + WORK_QUANT > digits_num)
-			end_of_block = digits_num;
+	for (int i = size - 1; i >= 0; i--) {
 
-		tmp1 = string1[end_of_block];
-		string1[end_of_block] = '\0';
-		a = atoi(&string1[i]);
-		string1[end_of_block] = tmp1;
-
-		tmp2 = string2[end_of_block];
-		string2[end_of_block] = '\0';
-		b = atoi(&string2[i]);
-		string2[end_of_block] = tmp2;
-
-		int sum1 = a + b + carry1_in;
-		sprintf(result1 + i, "%09d", sum1 % 1000000000);
-		carry1_out = sum1 > 999999999;
-
+		result1[i] = term1[i] + term2[i] + carry1;
+		carry1 = result1[i] > 999999999;
+		result1[i] %= 1000000000;
+#ifdef DEBUG_PRINT
+		fprintf(stderr, "%d: sum = %09d\n", rank, result1[i]);
+#endif
 		if (will_speculate) {
-			int sum2 = a + b + carry2_in;
-			sprintf(result2 + i, "%09d", sum2 % 1000000000);
-			carry2_out = sum2 > 999999999;
+			result2[i] = term1[i] + term2[i] + carry2;
+			carry2 = result2[i] > 999999999;
+			result2[i] %= 1000000000;
 		}
-
 	}
 
-	int carry_in = carry1_in;
-	char* result = result1;
-	int carry_out = carry1_out;
+	int carry_in = 0;
+	int* result = result1;
+	int carry_out = carry1;
 
-	if (rank < MPI_SIZE - 1) {
+	if (rank != MPI_SIZE - 1) {
 		MPI_Recv(&carry_in, 1, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, NULL);
 
-		if (carry_in) {
+		if ((carry_in == 1) && (will_speculate)) {
 			result = result2;
 			free(result1); result1 = NULL;
-			carry_out = carry2_out;
+			carry_out = carry2;
 		} else {
+			if (carry_in == 1)
+				add_one(result1, size);
+
 			result = result1;
 			free(result2); result2 = NULL;
-			carry_out = carry1_out;
+			carry_out = carry1;
 		}
 	}
 
+#ifdef DEBUG_PRINT
+	fprintf(stderr, "%d: carry_out = %d\n", rank, carry_out);
+#endif
+	assert(carry_out == 1 || carry_out == 0);
 	MPI_Send(&carry_out, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD);
 	return result;
+}
+
+void worker_func(int rank)
+{
+	range_s range;
+	MPI_Recv(&range, sizeof(range)/sizeof(int), MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+
+	int size = range.end - range.begin;
+
+	int* term1 = (int*)malloc(size * sizeof(term1[0]));
+	assert(term1);
+	int* term2 = (int*)malloc(size * sizeof(term2[0]));
+	assert(term2);
+
+	MPI_Recv(term1, size, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+	MPI_Recv(term2, size, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+
+#ifdef DEBUG_PRINT
+	fprintf(stderr, "%d: term1 = ", rank);
+	for (int i = 0; i < size; i++) {
+		fprintf(stderr, "%09d", term1[i]);
+	}
+	fprintf(stderr, "\n%d: term2 = ", rank);
+	for (int i = 0; i < size; i++) {
+		fprintf(stderr, "%09d", term2[i]);
+	}
+	fprintf(stderr, "\n");
+#endif
+
+	// It is our responsibility to free result
+	int* result = sum_block(term1, term2, size, rank);
+
+	MPI_Send(&size, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+	MPI_Send(result, size, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+	free(result);
+	free(term1);
+	free(term2);
 }
 
 void root_func(FILE* file1, FILE* file2)
@@ -112,96 +144,85 @@ void root_func(FILE* file1, FILE* file2)
 	fscanf(file1, "%d ", &size1);
 	fscanf(file2, "%d ", &size2);
 
-	int total_size = (size1 > size2) ? size1 : size2;
-	if (total_size % 9 != 0)
-		total_size += 9 - (total_size % 9);
-	//fprintf(stderr, "size1 = %d, size2 = %d\n", size1, size2);
+	int array_size = (size1 > size2) ? size1 : size2;
+	array_size = (array_size % 9) ? array_size / 9 + 1 : array_size / 9;
+#ifdef DEBUG_PRINT
+	fprintf(stderr, "ROOT: size1 = %d, size2 = %d\n", size1, size2);
+#endif
 
-	char* string1 = (char*)malloc(total_size + sizeof((char)'\0'));
-	assert(string1);
-	char* string2 = (char*)malloc(total_size + sizeof((char)'\0'));
-	assert(string2);
+	int* array1 = (int*)malloc(array_size * sizeof(array1[0]));
+	assert(array1);
+	int* array2 = (int*)malloc(array_size * sizeof(array2[0]));
+	assert(array2);
 
-	memset(string1, '0', total_size); string1[total_size] = '\0';
-	fread(string1 + (total_size - size1), 1, size1, file1);
+	int i = 0;
+	while (fscanf(file1, "%9d", &array1[i++]) == 1);
 
-	memset(string2, '0', total_size); string2[total_size] = '\0';
-	fread(string2 + (total_size - size2), 1, size2, file2);
+	i = 0;
+	while (fscanf(file2, "%9d", &array2[i++]) == 1);
 
 	int workers_num = MPI_SIZE - 1;
-	// number of block to add
-	int work_quota = total_size / (workers_num * WORK_QUANT);
+	int work_quota = array_size / workers_num;
 	if (work_quota == 0) {
 		fprintf(stderr, "Too many processes for current task\n");
-		assert(work_quota > 0);
+		assert(array_size > workers_num);
 	}
+#ifdef DEBUG_PRINT
+	fprintf(stderr, "arr_size = %d, work_num = %d, quota = %d\n", array_size, workers_num, work_quota);
+#endif
 	double start = MPI_Wtime();
 	for (int i = MPI_SIZE - 1; i >= 1; i--) {
-		range_s rg;
-		rg.begin = work_quota * WORK_QUANT * (i - 1);
-		rg.end   = rg.begin + work_quota * WORK_QUANT;
-		if (i == MPI_SIZE  - 1)
-			rg.end = total_size;
+		range_s range;
+		range.begin = work_quota * (i - 1);
+		range.end   = range.begin + work_quota;
+#ifdef DEBUG_PRINT
+		fprintf(stderr, "%d:%d\n", range.begin, range.end);
+#endif
 
 		// Send info about amount of work to do
-		MPI_Send(&rg, sizeof(rg)/sizeof(int), MPI_INT, i, 0, MPI_COMM_WORLD);
+		MPI_Send(&range, sizeof(range)/sizeof(int), MPI_INT, i, 0, MPI_COMM_WORLD);
 		// Send input for the work
-		MPI_Send(string1 + rg.begin, rg.end - rg.begin, MPI_CHAR, i, 0, MPI_COMM_WORLD);
-		MPI_Send(string2 + rg.begin, rg.end - rg.begin, MPI_CHAR, i, 0, MPI_COMM_WORLD);
+		MPI_Send(array1 + range.begin, work_quota, MPI_INT, i, 0, MPI_COMM_WORLD);
+		MPI_Send(array2 + range.begin, work_quota, MPI_INT, i, 0, MPI_COMM_WORLD);
 	}
 
 	int carry = 0;
 	MPI_Recv(&carry, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, NULL);
+#ifdef DEBUG_PRINT
+	fprintf(stderr, "ROOT: carry_in = %d\n", carry);
+#endif
 	assert(carry == 0 || carry == 1);
 
-	char* result_string = (char*)malloc(total_size + sizeof((char)'\0'));
-	assert(result_string);
-	result_string[total_size] = '\0';
-	int digits_num = 0;
-	char* ptr = result_string;
-	for(int i = 1; i < MPI_SIZE;
-		ptr += digits_num, i++) {
-		MPI_Recv(&digits_num, 1, MPI_INT, i, 0, MPI_COMM_WORLD, NULL);
-		MPI_Recv(ptr, digits_num, MPI_CHAR, i, 0, MPI_COMM_WORLD, NULL);
-	}
-	assert(ptr == result_string + total_size);
+	int* result = (int*)malloc(array_size * sizeof(int));
+	assert(result);
 
-	printf("Sum: %s%s\n", carry ? "1" : "", result_string);
-	printf("Time elapsed: %lg\n", MPI_Wtime() - start);
+	int work_completed = 0;
+	int* ptr = result;
+	for (int i = 1; i < MPI_SIZE; ptr += work_completed, i++) {
+		MPI_Recv(&work_completed, 1, MPI_INT, i, 0, MPI_COMM_WORLD, NULL);
+		MPI_Recv(ptr, work_completed, MPI_INT, i, 0, MPI_COMM_WORLD, NULL);
+	}
+	assert(ptr == result + array_size);
+
+#define DEBUG_PRINT
+#ifdef DEBUG_PRINT
+	printf("     %s", carry ? " " : "");
+	for (int i = 0; i < array_size; i++)
+		printf("%09d", array1[i]);
+	printf("\n  +\n");
+	printf("     %s", carry ? " " : "");
+	for (int i = 0; i < array_size; i++)
+		printf("%09d", array2[i]);
+#endif
+	printf("\nSum: %s", carry ? "1" : "");
+	for (int i = 0; i < array_size; i++)
+		printf("%09d", result[i]);
+	printf("\nTime elapsed: %lg\n", MPI_Wtime() - start);
 	fflush(stdout);
 
-	free(result_string);
-	free(string1);
-	free(string2);
-}
-
-void worker_func(int rank)
-{
-	range_s rg;
-	MPI_Recv(&rg, sizeof(rg)/sizeof(int), MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
-
-	int digits_num = rg.end - rg.begin;
-
-	char* string1 = (char*)malloc(digits_num + 1);
-	string1[digits_num] = '\0';
-	assert(string1);
-	char* string2 = (char*)malloc(digits_num + 1);
-	string2[digits_num] = '\0';
-	assert(string2);
-
-	MPI_Recv(string1, digits_num, MPI_CHAR, 0, 0, MPI_COMM_WORLD, NULL);
-	MPI_Recv(string2, digits_num, MPI_CHAR, 0, 0, MPI_COMM_WORLD, NULL);
-	//fprintf(stderr, "string1 = %s, string2 = %s\n", string1, string2);
-
-	// It is our responsibility to free result
-	char* result = sum_block(string1, string2, rg, rank);
-
-	MPI_Send(&digits_num, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-	MPI_Send(result, digits_num, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
-
 	free(result);
-	free(string1);
-	free(string2);
+	free(array1);
+	free(array2);
 }
 
 int main(int argc, char* argv[])
