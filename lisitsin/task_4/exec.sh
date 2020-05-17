@@ -1,6 +1,6 @@
 #!/bin/bash
 set +x
 
-make $1 > /dev/null
+make $1
 mpirun -n 5 --oversubscribe $@
 

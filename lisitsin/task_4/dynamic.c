@@ -6,7 +6,8 @@
 #include <math.h>
 #include <string.h>
 
-#define GRANULARITY 2000
+// Number of blocks per worker
+#define GRANULARITY 2
 
 int MPI_SIZE = 0;
 
@@ -200,14 +201,11 @@ void root_func(FILE* file1, FILE* file2)
 
 	// Distribute tasks
 	int workers_num = MPI_SIZE - 1;
-	int work_quota = term_size / (GRANULARITY * workers_num);
-	if (work_quota == 0) {
+	int block_size = term_size / (GRANULARITY * workers_num);
+	if (block_size == 0) {
 		fprintf(stderr, "Too many processes for current task\n");
-		assert(term_size > workers_num);
+		assert(block_size > 0);
 	}
-#ifdef DEBUG_PRINT
-	fprintf(stderr, "arr_size = %d, work_num = %d, quota = %d\n", term_size, workers_num, work_quota);
-#endif
 	double start = MPI_Wtime();
 
 	int* buf1 = (int*)malloc(term_size * sizeof(buf1[0]));
@@ -216,17 +214,20 @@ void root_func(FILE* file1, FILE* file2)
 	assert(buf1);
 
 	// Initialize tasks
-	int tasks_num = term_size / work_quota;
-	fprintf(stderr, "tasks_num = %d, quota = %d", tasks_num, work_quota);
+	int tasks_num = term_size / block_size;
+#ifdef DEBUG_PRINT
+	fprintf(stderr, "term_size = %d(%d digits), workers_num = %d, tasks_num = %d, block_size = %d, block_num_per_worker = %d\n",
+			term_size, term_size * 9, workers_num, tasks_num, block_size, GRANULARITY);
+#endif
 	task_s* task_pool = (task_s*)calloc(tasks_num, sizeof(*task_pool));
 	for (int i = 0; i < tasks_num; i++) {
-		task_pool[i].origin = i * work_quota;
+		task_pool[i].origin = i * block_size;
 		task_pool[i].speculated = 0;
-		task_pool[i].size   = work_quota;
-		task_pool[i].term1  = &term1[i * work_quota];
-		task_pool[i].term2  = &term2[i * work_quota];
-		task_pool[i].res1   = &buf1[i * work_quota];
-		task_pool[i].res2   = &buf2[i * work_quota];
+		task_pool[i].size   = block_size;
+		task_pool[i].term1  = &term1[i * block_size];
+		task_pool[i].term2  = &term2[i * block_size];
+		task_pool[i].res1   = &buf1[i * block_size];
+		task_pool[i].res2   = &buf2[i * block_size];
 		task_pool[i].carry1 = 0;
 		task_pool[i].carry2 = 0;
 	}
@@ -337,8 +338,9 @@ void root_func(FILE* file1, FILE* file2)
 	printf("     %s", carry ? " " : "");
 	for (int i = 0; i < term_size; i++)
 		printf("%09d", term2[i]);
+	printf("\n");
 #endif
-	printf("\nSum: %s", carry ? "1" : "");
+	printf("Sum: %s", carry ? "1" : "");
 	for (int i = 0; i < term_size; i++)
 		printf("%09d", result[i]);
 	printf("\nTime elapsed: %lg\n", MPI_Wtime() - start);

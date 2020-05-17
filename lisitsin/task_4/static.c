@@ -204,7 +204,6 @@ void root_func(FILE* file1, FILE* file2)
 	}
 	assert(ptr == result + array_size);
 
-#define DEBUG_PRINT
 #ifdef DEBUG_PRINT
 	printf("     %s", carry ? " " : "");
 	for (int i = 0; i < array_size; i++)
@@ -213,8 +212,9 @@ void root_func(FILE* file1, FILE* file2)
 	printf("     %s", carry ? " " : "");
 	for (int i = 0; i < array_size; i++)
 		printf("%09d", array2[i]);
+	printf("\n");
 #endif
-	printf("\nSum: %s", carry ? "1" : "");
+	printf("Sum: %s", carry ? "1" : "");
 	for (int i = 0; i < array_size; i++)
 		printf("%09d", result[i]);
 	printf("\nTime elapsed: %lg\n", MPI_Wtime() - start);
