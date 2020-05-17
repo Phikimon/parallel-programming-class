@@ -1,0 +1,24 @@
+### Usage
+
+```bash
+$ ./exec.sh static file1.txt file2.txt
+mpicc -lm -std=c99 static.c -o static
+Sum: 1000000000000000000000000000000000123000000001000000000000000001000000000
+Time elapsed: 0.000931
+$
+$ ./exec.sh dynamic file1.txt file2.txt
+mpicc -lm -std=c99 dynamic.c -o dynamic
+Sum: 1000000000000000000000000000000000123000000001000000000000000001000000000
+Time elapsed: 0.000529001
+$
+$ vim dynamic.c # Turning on some debug printfs
+$
+$ ./exec.sh dynamic file1.txt file2.txt
+mpicc -lm -std=c99 dynamic.c -o dynamic
+term_size = 8(72 digits), workers_num = 4, tasks_num = 8, block_size = 1, block_num_per_worker = 2
+      900000000000000000000000000000000123000000000999999999900000000900000000
+  +
+      100000000000000000000000000000000000000000000000000000100000000100000000
+Sum: 1000000000000000000000000000000000123000000001000000000000000001000000000
+```
+
