@@ -234,7 +234,6 @@ void root_func(FILE* file1, FILE* file2)
 
 	int assigned_tasks = 0;
 	int completed_tasks = 0;
-	int cur_origin = 0;
 	int cur_worker = 0;
 	MPI_Status status = {};
 	while (completed_tasks < tasks_num) {
