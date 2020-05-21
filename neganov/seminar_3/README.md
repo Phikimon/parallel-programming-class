@@ -1,3 +1,11 @@
+### Afterthought
+
+I have rethought the way spinlocks should be used and benchmarked, after reading [this blogpost](https://probablydance.com/2019/12/30/measuring-mutexes-spinlocks-and-how-bad-the-linux-scheduler-really-is/) and, more importantly, [Linus' answer](https://www.realworldtech.com/forum/?threadid=189711&curpostid=189723) to it. So it would be fair to consider contents of this directory garbage.
+
+However this is just an educational excercise, so it was worth trying and failing.
+
+> This has absolutely nothing to do with cache coherence latencies or anything like that. It has everything to do with badly implemented locking.
+
 ## Spinlocks
 
 ### Task
