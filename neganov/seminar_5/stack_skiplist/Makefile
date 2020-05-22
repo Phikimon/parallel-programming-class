@@ -20,4 +20,4 @@ skiplist_test: $(SKIPLIST_OBJ) $(HEADERS)
 	gcc -g -Wall -I$(INCLUDE_DIR) $(SANITIZE_FLAGS) -pthread -std=c99 $(SKIPLIST_OBJ) -o $@
 
 clean:
-	rm -f skiplist_test stack_test *.o 2> /dev/null
+	rm -f tags skiplist_test stack_test *.o 2> /dev/null
