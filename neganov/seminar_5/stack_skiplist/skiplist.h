@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "helpers.h"
+#include "stack.h"
 
 #define MAX_LEVEL 4 // inclusive
 
@@ -28,7 +29,7 @@ typedef struct skiplist_node sln_s;
 struct skiplist {
 	sln_s* head;
 	sln_s* tail;
-	//freelist;
+	struct stack freelist;
 };
 typedef struct skiplist sl_s;
 

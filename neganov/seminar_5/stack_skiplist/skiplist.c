@@ -43,15 +43,25 @@ void sl_init(sl_s* skiplist)
 	for (int i = 0; i <= MAX_LEVEL; ++i)
 		skiplist->head->next[i] = skiplist->tail;
 
-	// initialize freelist
+	stack_init(&skiplist->freelist);
 }
 
 void sl_deinit(sl_s* skiplist)
 {
-	free(POINTER(skiplist->head));
-	free(POINTER(skiplist->tail));
+	// Free nodes still in skiplist
+	sln_s* curr = skiplist->head;
+	while(curr) {
+		assert(!IS_MARKED(curr));
+		free(curr);
+		curr = (sln_s*)curr->next[0];
+	}
 
-	// free everything from freelist
+	// Free nodes from freelist
+	sln_s* node;
+	while ((node = stack_pop(&skiplist->freelist))) {
+		assert(IS_MARKED(node));
+		free(POINTER(node));
+	}
 }
 
 int sl_find(sl_s* sl, int val, sln_s** preds, sln_s** succs)
@@ -188,7 +198,7 @@ int sl_remove(sl_s* sl, int val)
 			succ = (sln_s*)atomic_load(&succs[bottom_level]->next[bottom_level]);
 			if (i_marked_it) {
 				sl_find(sl, val, preds, succs);
-				// add victim to freelist
+				stack_push(&sl->freelist, victim);
 				return 1;
 			} else if (IS_MARKED(succ))
 				return 0;
