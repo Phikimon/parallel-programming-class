@@ -79,22 +79,29 @@ static void try_cleanup(struct stack* stack,
 	}
 }
 
-void* stack_pop(struct stack *stk)
+void* stack_pop(struct stack *stk, int force)
 {
 	struct stack old, new;
 	void* result = NULL;
 
 	atomic_fetch_inc(&stk->ref_cnt);
 
-	do {
+	old.gen  = atomic_load(&stk->gen);
+	old.head = atomic_load(&stk->head);
+	if ((old.head == NULL) && (!force)) {
+		return NULL;
+	}
+	while (old.head == NULL) {
 		old.gen  = atomic_load(&stk->gen);
 		old.head = atomic_load(&stk->head);
-	} while (old.head == NULL);
+	}
 
 	new.gen  = old.gen + 1;
 	new.head = atomic_load(&old.head->next);
 
 	while (atomic_cas_ptr((__int128*)stk, (__int128*)&old, (__int128*)&new) == 0) {
+		if ((old.head == NULL) && (!force))
+			goto cleanup;
 		while (old.head == NULL) {
 			old.gen  = atomic_load(&stk->gen);
 			old.head = atomic_load(&stk->head);
@@ -109,6 +116,7 @@ void* stack_pop(struct stack *stk)
 	result = (void*)atomic_load(&old.head->data);
 
 	// refcnt is decremented in try_cleanup()
+cleanup:
 	try_cleanup(stk, (struct stack_entry*)old.head);
 
 	return result;

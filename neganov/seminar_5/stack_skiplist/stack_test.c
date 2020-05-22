@@ -39,7 +39,7 @@ void* popper(void* arg) {
 		int global_iteration_num = atomic_fetch_inc(&popper_counter);
 		printf("pop: %d\n", global_iteration_num);
 #endif
-		data = stack_pop(stack);
+		data = stack_pop(stack, 1); //< wait for data
 #ifdef DEBUG_DATA
 		if (data == (void*)(0))
 			atomic_fetch_inc(&popped_1);

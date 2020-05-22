@@ -21,7 +21,8 @@ void stack_init(struct stack *stack);
 
 void stack_push(struct stack *stack, void* data);
 
-// returns data stored in entry
-void* stack_pop(struct stack *stk);
+// returns data stored in entry. if force is set,
+// waits for valid entry
+void* stack_pop(struct stack *stk, int force);
 
 #endif
