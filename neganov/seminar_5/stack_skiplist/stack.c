@@ -99,7 +99,13 @@ void* stack_pop(struct stack *stk, int force)
 	new.gen  = old.gen + 1;
 	new.head = atomic_load(&old.head->next);
 
-	while (atomic_cas_ptr((__int128*)stk, (__int128*)&old, (__int128*)&new) == 0) {
+#ifdef ABA_VULNERABLE
+#  define HEAD_TYPE uintptr_t
+#else
+#  define HEAD_TYPE __int128
+#endif
+
+	while (atomic_cas_ptr((HEAD_TYPE*)stk, (HEAD_TYPE*)&old, (HEAD_TYPE*)&new) == 0) {
 		if ((old.head == NULL) && (!force))
 			goto cleanup;
 		while (old.head == NULL) {
@@ -110,6 +116,8 @@ void* stack_pop(struct stack *stk, int force)
 		new.gen = old.gen + 1;
 		new.head = atomic_load(&old.head->next);
 	}
+
+#undef HEAD_TYPE
 
 	// We will try to free() old.head, so
 	// save result for caller

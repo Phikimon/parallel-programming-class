@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// If the following define
+// is set then stack->gen
+// is meaningless
+#define ABA_VULNERABLE
+
 struct stack_entry {
 	volatile struct stack_entry *next;
 	volatile struct stack_entry *freelist_next; //< Used to silence ThreadSanitizer

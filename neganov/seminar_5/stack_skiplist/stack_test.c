@@ -99,7 +99,9 @@ int main(void)
 		assert((r == 0) && "pthread_join");
 	}
 
+#ifndef ABA_VULNERABLE
 	assert(stack->gen == (void*)ITER_NUM);
+#endif
 	assert(stack->head == NULL);
 	free(stack);
 	return 0;
