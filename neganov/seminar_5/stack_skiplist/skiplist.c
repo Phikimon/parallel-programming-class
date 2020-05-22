@@ -50,16 +50,18 @@ void sl_deinit(sl_s* skiplist)
 {
 	// Free nodes still in skiplist
 	sln_s* curr = skiplist->head;
+	sln_s* next;
 	while(curr) {
-		assert(!IS_MARKED(curr));
-		free(curr);
-		curr = (sln_s*)curr->next[0];
+		assert(!IS_MARKED(curr->next[0]));
+		next = (sln_s*)curr->next[0];
+		free(POINTER(curr));
+		curr = next;
 	}
 
 	// Free nodes from freelist
 	sln_s* node;
-	while ((node = stack_pop(&skiplist->freelist))) {
-		assert(IS_MARKED(node));
+	while ((node = stack_pop(&skiplist->freelist, 0))) {
+		assert(IS_MARKED(node->next[0]));
 		free(POINTER(node));
 	}
 }

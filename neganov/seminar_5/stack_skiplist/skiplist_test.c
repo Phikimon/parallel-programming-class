@@ -163,5 +163,7 @@ int main(void)
 #ifdef DEBUG_DATA
 	assert(sl_debug_get_number_of_keys(skiplist) == 2);
 #endif
+	sl_deinit(skiplist);
+	free(skiplist);
 	return 0;
 }
