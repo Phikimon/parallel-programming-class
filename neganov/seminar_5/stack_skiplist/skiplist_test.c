@@ -6,23 +6,36 @@
 #include "helpers.h"
 #include "skiplist.h"
 
-#define ITER_NUM 50000 // must be divisible by *_THREADS
-#define THREADS_PER_OPERATION 5
-
-#define TOTAL_THREADS (THREADS_PER_OPERATION * 3)
-#define ITER_PER_CONTAINS (ITER_NUM / THREADS_PER_OPERATION)
-#define ITER_PER_ADD      (ITER_NUM / THREADS_PER_OPERATION)
-#define ITER_PER_REMOVE   (ITER_NUM / THREADS_PER_OPERATION)
-
-sl_s* skiplist;
+#define ITER_NUM 1000000 // must be divisible by *_THREADS
 
 //#define DEBUG_SINGLETHREADED
 
 #ifndef DEBUG_SINGLETHREADED
-#  define DEBUG_DATA
+//#  define DEBUG_DATA
 //#  define DEBUG_DATA_VERBOSE
 //#  define SHOW_PROGRESS
 #endif
+
+#define NO_FINAL_PRINT
+
+#ifdef DEBUG_DATA
+#  define THREADS_PER_OPERATION 2
+#  define CONTAINS_THREADS THREADS_PER_OPERATION
+#  define ADD_THREADS      THREADS_PER_OPERATION
+#  define REMOVE_THREADS   THREADS_PER_OPERATION
+#  define TOTAL_THREADS (THREADS_PER_OPERATION * 3)
+#else
+#  define CONTAINS_THREADS 0
+#  define ADD_THREADS      13
+#  define REMOVE_THREADS   0
+#  define TOTAL_THREADS (CONTAINS_THREADS + ADD_THREADS + REMOVE_THREADS)
+#endif
+
+#define ITER_PER_CONTAINS (CONTAINS_THREADS ? (ITER_NUM / CONTAINS_THREADS) : 0)
+#define ITER_PER_ADD      (ADD_THREADS      ? (ITER_NUM / ADD_THREADS)      : 0)
+#define ITER_PER_REMOVE   (REMOVE_THREADS   ? (ITER_NUM / REMOVE_THREADS)   : 0)
+
+sl_s* skiplist;
 
 #ifdef DEBUG_DATA
 volatile int contains_counter = 0;
@@ -30,13 +43,14 @@ volatile int add_counter = 0;
 volatile int remove_counter = 0;
 #endif
 
-#define VALS_TO_STORE (10*(ITER_NUM))
+#define VALS_TO_STORE ((ITER_NUM > 100000) ? 100000 : ITER_NUM)
 
 void* contains(void* arg) {
 	sl_s* skiplist = (sl_s*)arg;
 	for (int i = 0; i < ITER_PER_CONTAINS; i++) {
 #ifdef SHOW_PROGRESS
-		fprintf(stderr, "%d: in contains\n", i);
+		if (i % (ITER_PER_CONTAINS/100 + 1) == 0)
+			fprintf(stderr, "%d: in contains\n", i);
 #endif
 #ifdef DEBUG_DATA
 		int val = atomic_fetch_inc(&contains_counter);
@@ -49,7 +63,8 @@ void* contains(void* arg) {
 		sl_contains(skiplist, val);
 #endif
 #ifdef SHOW_PROGRESS
-		fprintf(stderr, "%d: out contains\n", i);
+		if (i % (ITER_PER_CONTAINS/100 + 1) == 0)
+			fprintf(stderr, "%d: out contains\n", i);
 #endif
 	}
 	return NULL;
@@ -59,7 +74,8 @@ void* add(void* arg) {
 	sl_s* skiplist = (sl_s*)arg;
 	for (int i = 0; i < ITER_PER_ADD; i++) {
 #ifdef SHOW_PROGRESS
-		fprintf(stderr, "%d: in add\n", i);
+		if (i % (ITER_PER_ADD/100 + 1) == 0)
+			fprintf(stderr, "%d: in add\n", i);
 #endif
 #ifdef DEBUG_DATA
 		int val = atomic_fetch_inc(&add_counter);
@@ -72,7 +88,8 @@ void* add(void* arg) {
 		sl_add(skiplist, val);
 #endif
 #ifdef SHOW_PROGRESS
-		fprintf(stderr, "%d: out add\n", i);
+		if (i % (ITER_PER_ADD/100 + 1) == 0)
+			fprintf(stderr, "%d: out add\n", i);
 #endif
 	}
 	return NULL;
@@ -82,7 +99,8 @@ void* my_remove(void* arg) {
 	sl_s* skiplist = (sl_s*)arg;
 	for (int i = 0; i < ITER_PER_REMOVE; i++) {
 #ifdef SHOW_PROGRESS
-		fprintf(stderr, "%d: in remove\n", i);
+		if (i % (ITER_PER_REMOVE/100 + 1) == 0)
+			fprintf(stderr, "%d: in remove\n", i);
 #endif
 #ifdef DEBUG_DATA
 		int val = atomic_fetch_inc(&remove_counter);
@@ -95,7 +113,8 @@ void* my_remove(void* arg) {
 		sl_remove(skiplist, val);
 #endif
 #ifdef SHOW_PROGRESS
-		fprintf(stderr, "%d: out remove\n", i);
+		if (i % (ITER_PER_REMOVE/100 + 1) == 0)
+			fprintf(stderr, "%d: out remove\n", i);
 #endif
 	}
 	return NULL;
@@ -144,9 +163,9 @@ int main(void)
 	// Spawn writers
 	for (int i = 0; i < TOTAL_THREADS; i++) {
 		void* (*f)(void*) = NULL;
-		if (i < THREADS_PER_OPERATION)
+		if (i < CONTAINS_THREADS)
 			f = contains;
-		else if (i < 2 * THREADS_PER_OPERATION)
+		else if (i < CONTAINS_THREADS + ADD_THREADS)
 			f = add;
 		else f = my_remove;
 		r = pthread_create(&thr[i], NULL, f, (void*)(skiplist));
@@ -158,7 +177,9 @@ int main(void)
 	}
 #endif
 
+#ifndef NO_FINAL_PRINT
 	sl_debug_show_all_keys(skiplist);
+#endif
 	fprintf(stderr, "keys left = %d\n", sl_debug_get_number_of_keys(skiplist));
 #ifdef DEBUG_DATA
 	assert(sl_debug_get_number_of_keys(skiplist) == 2);
