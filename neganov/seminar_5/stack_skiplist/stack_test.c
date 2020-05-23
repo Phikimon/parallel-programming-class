@@ -8,9 +8,9 @@
 
 #define MAGIC ((int)0xBADF00D)
 
-#define ITER_NUM 100002 // must be divisible by POPPING_THREADS and PUSHING_THREADS
-#define POPPING_THREADS 6
-#define PUSHING_THREADS 6
+#define ITER_NUM 100000005 // must be divisible by POPPING_THREADS and PUSHING_THREADS
+#define POPPING_THREADS 3
+#define PUSHING_THREADS 5
 
 #define TOTAL_THREADS (POPPING_THREADS + PUSHING_THREADS)
 #define ITER_PER_POPPER (ITER_NUM / POPPING_THREADS)
@@ -37,7 +37,8 @@ void* popper(void* arg) {
 	for (int i = 0; i < ITER_PER_POPPER; i++) {
 #ifdef PRINT_PROGRESS
 		int global_iteration_num = atomic_fetch_inc(&popper_counter);
-		printf("pop: %d\n", global_iteration_num);
+		if (global_iteration_num % (ITER_NUM / 100) == 0)
+			printf("pop: %lg%%\n", (((double)global_iteration_num)/ITER_NUM) * 100);
 #endif
 		data = stack_pop(stack, 1); //< wait for data
 #ifdef DEBUG_DATA
@@ -59,7 +60,9 @@ void* pusher(void* arg) {
 	void* data = (void*)(MAGIC);
 	for (int i = 0; i < ITER_PER_PUSHER; i++) {
 #ifdef PRINT_PROGRESS
-		printf("push: %d\n", atomic_fetch_inc(&pusher_counter));
+		int global_iteration_num = atomic_fetch_inc(&pusher_counter);
+		if (global_iteration_num % (ITER_NUM / 100) == 0)
+			printf("push: %lg%%\n", (((double)global_iteration_num)/ITER_NUM) * 100);
 #endif
 #ifdef DEBUG_DATA
 		data = (void*)(i % 2);
