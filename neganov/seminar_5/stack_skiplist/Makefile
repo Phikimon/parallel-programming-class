@@ -1,12 +1,10 @@
-
 SANITIZE_FLAGS=-fsanitize=address
 #SANITIZE_FLAGS=-fsanitize=thread
 
 STACK_OBJ=stack_test.o stack.o
 SKIPLIST_OBJ=stack.o skiplist_test.o skiplist.o
 
-STACK_HEADERS=helpers.h stack.h
-SKIPLIST_HEADERS=helpers.h skiplist.h
+HEADERS=helpers.h stack.h skiplist.h
 
 all: stack_test skiplist_test
 
